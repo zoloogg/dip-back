@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'diplom-back',
-      script: 'npm start',
+      script: 'node dist/src/index.js',
       autorestart: true,
       watch: false,
     },
