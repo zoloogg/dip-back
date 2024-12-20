@@ -1,6 +1,5 @@
 export const imageGeneratorService = {
   generate: async (type: string, description: string) => {
-    console.log(process.env.AI_API_KEY)
     const response = await fetch(
       'https://api.getimg.ai/v1/flux-schnell/text-to-image',
       {

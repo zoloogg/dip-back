@@ -2,13 +2,12 @@ import 'dotenv/config'
 import { Request, Response } from 'express'
 import { imageGeneratorService } from '../services/imageGeneratorService'
 import { userService } from '../services/userService'
+import { translationService } from '../services/translationService'
 
 export const picturesController = {
   generate: async (req: Request, res: Response) => {
     const { authorization: auth } = req.headers
     const { type, description, count } = req.body
-
-    console.log(req.body)
 
     if (!auth) {
       res.status(401).json({
@@ -20,7 +19,6 @@ export const picturesController = {
     }
 
     const token = (auth as string).split(' ')[1]
-    console.log('token: ', token)
 
     const userId = userService.getUserByToken(token)
 
@@ -44,8 +42,15 @@ export const picturesController = {
       return
     }
 
+    const translated = await translationService.translate(description)
+    const translatedDescription = translated.result
+    console.log('translatedDescription: ', translatedDescription)
+
     const promises = Array.from(Array(count)).map(async (x, i) => {
-      const cur = await imageGeneratorService.generate(type, description)
+      const cur = await imageGeneratorService.generate(
+        type,
+        translatedDescription
+      )
       userService.useCredit(userId, 'create')
       return cur
     })
