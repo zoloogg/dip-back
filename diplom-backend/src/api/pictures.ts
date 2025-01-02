@@ -3,6 +3,7 @@ import { Request, Response } from 'express'
 import { imageGeneratorService } from '../services/imageGeneratorService'
 import { userService } from '../services/userService'
 import { translationService } from '../services/translationService'
+import { openAIService } from '../services/openAIService'
 
 export const picturesController = {
   generate: async (req: Request, res: Response) => {
@@ -32,26 +33,21 @@ export const picturesController = {
     }
 
     const credits = userService.getCredits(userId)
-
-    if (credits.createLimit < count) {
-      res.status(400).json({
-        success: false,
-        message: 'Not enough credits',
-      })
-
-      return
-    }
+    const isFree = credits.createLimit === 0
+    console.log('isFree: ', isFree)
 
     const translated = await translationService.translate(description)
     const translatedDescription = translated.result
+
     console.log('translatedDescription: ', translatedDescription)
 
     const promises = Array.from(Array(count)).map(async (x, i) => {
-      const cur = await imageGeneratorService.generate(
-        type,
-        translatedDescription
-      )
-      userService.useCredit(userId, 'create')
+      const cur = isFree
+        ? await imageGeneratorService.generate(type, translatedDescription)
+        : await openAIService.generate(type, translatedDescription)
+
+      if (!isFree) userService.useCredit(userId, 'create')
+
       return cur
     })
 
